@@ -31,7 +31,7 @@ string originalText(string cipher_text, string key) {
     return orig_text;
 }
 
-string trigrams(int n, char arr[]) {
+string trigramPermutations(int n, string arr) {
     string trigram{};
     for (int i = 0; i < 3; i++) {
         trigram += arr[n % 26];
@@ -40,7 +40,7 @@ string trigrams(int n, char arr[]) {
     return trigram;
 }
 
-string formatCiphertext(const string& ciphertext) {
+string formatCiphertext(const string &ciphertext) {
     string formattedCiphertext{};
     for (char c : ciphertext) {
         if (isalpha(c)) {
@@ -50,47 +50,38 @@ string formatCiphertext(const string& ciphertext) {
     return formattedCiphertext;
 }
 
-char * alphabet() {
-    char arr[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-                  'U', 'V', 'W', 'X', 'Y', 'Z'};
-    return arr;
+string theAlphabet() {
+    return "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 }
 
-int main() {
-    nGramScorer qgram(ifstream(R"(C:\Users\zna58005\CLionProjects\vigenerecipher\quadgrams.txt)"));
-    nGramScorer trigram(ifstream(R"(C:\Users\zna58005\CLionProjects\vigenerecipher\trigrams.txt)"));
-    string ciphertext = formatCiphertext("Slycmiskhtvp, mh wrlinaevkm, zq jbe ckuompgs rlt mthws ay aiqylykurl zak ziqlpu wozfozbjehzmd cn gay bklwseau if gacdw wefkgum");
-    //cout << ciphertext << endl;
-    cout << setprecision(16) << qgram.score(
-            "CRYPTOGRAPHYORCRYPTOLOGYISTHEPRACTICEANDSTUDYOFTECHNIQUESFORSECURECOMMUNICATIONINTHEPRESENCEOFTHIRDPARTIES")
-         << endl;
-    char arr[] = {'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-                  'U', 'V', 'W', 'X', 'Y', 'Z'};
-    string A(13 - 3, 'A');
-    map<double, string> keyCandidates;
+string firstThreeKeyLetters(nGramScorer trigram, const string &alphabet, const string &ciphertext, int keyLength,
+                            map<double, string> keyCandidates) {
+    string A(keyLength - 3, 'A');
     for (int i = 0; i < (int) pow(26, 3); i++) {
-        string key = trigrams(i, arr) + A;
+        string key = trigramPermutations(i, alphabet) + A;
         string key2 = generateKey(ciphertext, key);
         string pt = originalText(ciphertext, key2);
         double score = 0;
-        for (int j = 0; j < ciphertext.length(); j += 13) { // 13 is the keyBuilder length
+        for (int j = 0; j < ciphertext.length(); j += keyLength) { // 13 is the keyBuilder length
             score += trigram.score(pt.substr(j, 3));
         }
         keyCandidates[score] = key.substr(0, 3);
     }
-    string partialKey = keyCandidates[keyCandidates.rbegin()->first];
-    //cout << partialKey << endl;
-    string keyBuilder[] = {partialKey};
-    for (int i = 0; i < 10; i++) { // keyBuilder length - 3
+    return keyCandidates[keyCandidates.rbegin()->first];
+}
+
+string fullKey(nGramScorer qgram, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder,
+               map<double, string> keyCandidates) {
+    for (int i = 0; i < keyLength - 3; i++) { // keyBuilder length - 3
         keyCandidates.clear();
-        for (char c : arr) {
-            partialKey = keyBuilder[0] + c;
-            string pad(13 - partialKey.length(), 'A');
+        for (char c : alphabet) {
+            string partialKey = keyBuilder + c;
+            string pad(keyLength - partialKey.length(), 'A');
             string fullKey = partialKey + pad;
             string fullKey2 = generateKey(ciphertext, fullKey);
             string pt = originalText(ciphertext, fullKey2);
             double score = 0;
-            for (int j = 0; j < ciphertext.length(); j += 13) {
+            for (int j = 0; j < ciphertext.length(); j += keyLength) {
                 if (j + partialKey.length() < pt.length()) {
                     score += qgram.score(pt.substr(j, partialKey.length()));
                 }
@@ -98,8 +89,24 @@ int main() {
             keyCandidates[score] = partialKey;
         }
         //cout << keyCandidates[keyCandidates.rbegin()->first] << endl;
-        keyBuilder[0] = keyCandidates[keyCandidates.rbegin()->first];
+        keyBuilder = keyCandidates[keyCandidates.rbegin()->first];
     }
-    cout << keyCandidates[keyCandidates.rbegin()->first] << endl;
+    return keyCandidates[keyCandidates.rbegin()->first];
+}
+
+int main() {
+    nGramScorer qgram(ifstream(R"(C:\Users\zna58005\CLionProjects\vigenerecipher\quadgrams.txt)"));
+    nGramScorer trigram(ifstream(R"(C:\Users\zna58005\CLionProjects\vigenerecipher\trigrams.txt)"));
+    string ciphertext = formatCiphertext(
+            "Slycmiskhtvp, mh wrlinaevkm, zq jbe ckuompgs rlt mthws ay aiqylykurl zak ziqlpu wozfozbjehzmd cn gay bklwseau if gacdw wefkgum");
+    string alphabet = theAlphabet();
+    int keyLength = 13;
+    map<double, string> keyCandidates;
+    string keyBuilder = firstThreeKeyLetters(trigram, alphabet, ciphertext, keyLength, keyCandidates);
+    string theKey = fullKey(qgram, alphabet, ciphertext, keyLength, keyBuilder, keyCandidates);
+    cout << theKey << endl;
+    cout << setprecision(16) << qgram.score(
+            "CRYPTOGRAPHYORCRYPTOLOGYISTHEPRACTICEANDSTUDYOFTECHNIQUESFORSECURECOMMUNICATIONINTHEPRESENCEOFTHIRDPARTIES")
+         << endl;
     return EXIT_SUCCESS;
 }
