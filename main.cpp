@@ -63,7 +63,10 @@ string firstThreeKeyLetters(nGramScorer trigram, const string &alphabet, const s
         string pt = originalText(ciphertext, key2);
         double score = 0;
         for (int j = 0; j < ciphertext.length(); j += keyLength) { // 13 is the keyBuilder length
-            score += trigram.score(pt.substr(j, 3));
+            if (j + 3 < pt.length()) {
+                score += trigram.score(pt.substr(j, 3));
+            }
+            //score += trigram.score(pt.substr(j, 3));
         }
         keyCandidates[score] = key.substr(0, 3);
     }
@@ -100,13 +103,17 @@ int main() {
     string ciphertext = formatCiphertext(
             "Slycmiskhtvp, mh wrlinaevkm, zq jbe ckuompgs rlt mthws ay aiqylykurl zak ziqlpu wozfozbjehzmd cn gay bklwseau if gacdw wefkgum");
     string alphabet = theAlphabet();
-    int keyLength = 13;
     map<double, string> keyCandidates;
-    string keyBuilder = firstThreeKeyLetters(trigram, alphabet, ciphertext, keyLength, keyCandidates);
-    string theKey = fullKey(qgram, alphabet, ciphertext, keyLength, keyBuilder, keyCandidates);
-    cout << theKey << endl;
-    cout << setprecision(16) << qgram.score(
-            "CRYPTOGRAPHYORCRYPTOLOGYISTHEPRACTICEANDSTUDYOFTECHNIQUESFORSECURECOMMUNICATIONINTHEPRESENCEOFTHIRDPARTIES")
-         << endl;
+    int rangeStart = 4;
+    int rangeEnd = 20;
+    for (int i = rangeStart; i < rangeEnd; i++) {
+        int keyLength = i; // Need to fix keylength. Only works with length greater than 4.
+        string keyBuilder = firstThreeKeyLetters(trigram, alphabet, ciphertext, keyLength, keyCandidates);
+        string theKey = fullKey(qgram, alphabet, ciphertext, keyLength, keyBuilder, keyCandidates);
+        double bestScore = qgram.score(originalText(ciphertext, generateKey(ciphertext, theKey)));
+        cout << "Score: " << setprecision(16) << bestScore << ", " << "Key length: " << keyLength << ", " << "Key: "
+             << theKey << "\n" << "Decrypted: " << originalText(ciphertext, generateKey(ciphertext, theKey))
+             << "\n" << endl;
+    }
     return EXIT_SUCCESS;
 }
