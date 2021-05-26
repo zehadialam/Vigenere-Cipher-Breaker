@@ -24,15 +24,15 @@ nGramScorer::nGramScorer(std::ifstream file) {
         }
         file.close();
     }
-    for (auto& elementPair : nGramFrequencies) {
+    for (auto &elementPair : nGramFrequencies) {
         nGramFrequencies[elementPair.first] = log10(nGramFrequencies[elementPair.first]) - log10(sumValues);
     }
 }
 
-double nGramScorer::score(const std::string& text) {
+double nGramScorer::score(const std::string &text) {
     double score = 0;
     double floor = log10(0.01) - log10(sumValues);
-    for (int i = 0; i < text.length()-nGramLength + 1; i++) {
+    for (int i = 0; i < text.length() - nGramLength + 1; i++) {
         if (nGramFrequencies.count(text.substr(i, nGramLength))) {
             score += nGramFrequencies[text.substr(i, nGramLength)];
         } else {

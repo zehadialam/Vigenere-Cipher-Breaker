@@ -6,7 +6,9 @@
 class nGramScorer {
 public:
     explicit nGramScorer(std::ifstream file);
-    double score(const std::string& text);
+
+    double score(const std::string &text);
+
 private:
     std::unordered_map<std::string, double> nGramFrequencies;
     unsigned long long nGramLength;
