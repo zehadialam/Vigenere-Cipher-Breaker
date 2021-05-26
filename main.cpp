@@ -2,39 +2,31 @@
 #include <iostream>
 #include <unordered_map>
 #include <map>
-//#include <algorithm>
 #include <valarray>
-
 #include "nGramScorer.h"
 
 using namespace std;
 
-string generateKey(string str, string key) {
-    int x = str.size();
-    for (int i = 0;; i++) {
-        if (x == i)
-            i = 0;
-        if (key.size() == str.size())
-            break;
-        key.push_back(key[i]);
+string formatKey(const string& ciphertext, const string& key) {
+    string cipherTextLengthKey{};
+    for (int i = 0; i < ciphertext.length(); i += key.length()) {
+        cipherTextLengthKey += key;
     }
-    return key;
+    return cipherTextLengthKey.substr(0, ciphertext.length());
 }
 
-string originalText(string cipher_text, string key) {
-    string orig_text;
-    for (int i = 0; i < cipher_text.size(); i++) {
-        char x = (cipher_text[i] - key[i] + 26) % 26;
-        x += 'A';
-        orig_text.push_back(x);
+string decrypt(string ciphertext, string key) {
+    string decrypted{};
+    for (int i = 0; i < ciphertext.length(); i++) {
+        decrypted += toupper((((tolower(ciphertext[i] - 97)) - (tolower(key[i] - 97))) % 26 + 26) % 26 + 97);
     }
-    return orig_text;
+    return decrypted;
 }
 
-string trigramPermutations(int n, string arr) {
+string trigramPermutations(int n, string alphabet) {
     string trigram{};
     for (int i = 0; i < 3; i++) {
-        trigram += arr[n % 26];
+        trigram += alphabet[n % 26];
         n /= 26;
     }
     return trigram;
@@ -56,17 +48,16 @@ string theAlphabet() {
 
 string firstThreeKeyLetters(nGramScorer trigram, const string &alphabet, const string &ciphertext, int keyLength,
                             map<double, string> keyCandidates) {
-    string A(keyLength - 3, 'A');
+    string pad(keyLength - 3, 'A');
     for (int i = 0; i < (int) pow(26, 3); i++) {
-        string key = trigramPermutations(i, alphabet) + A;
-        string key2 = generateKey(ciphertext, key);
-        string pt = originalText(ciphertext, key2);
+        string key = trigramPermutations(i, alphabet) + pad;
+        string formattedKey = formatKey(ciphertext, key);
+        string plaintext = decrypt(ciphertext, formattedKey);
         double score = 0;
-        for (int j = 0; j < ciphertext.length(); j += keyLength) { // 13 is the keyBuilder length
-            if (j + 3 < pt.length()) {
-                score += trigram.score(pt.substr(j, 3));
+        for (int j = 0; j < ciphertext.length(); j += keyLength) {
+            if (j + 3 < plaintext.length()) {
+                score += trigram.score(plaintext.substr(j, 3));
             }
-            //score += trigram.score(pt.substr(j, 3));
         }
         keyCandidates[score] = key.substr(0, 3);
     }
@@ -75,18 +66,18 @@ string firstThreeKeyLetters(nGramScorer trigram, const string &alphabet, const s
 
 string fullKey(nGramScorer qgram, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder,
                map<double, string> keyCandidates) {
-    for (int i = 0; i < keyLength - 3; i++) { // keyBuilder length - 3
+    for (int i = 0; i < keyLength - 3; i++) {
         keyCandidates.clear();
         for (char c : alphabet) {
             string partialKey = keyBuilder + c;
             string pad(keyLength - partialKey.length(), 'A');
             string fullKey = partialKey + pad;
-            string fullKey2 = generateKey(ciphertext, fullKey);
-            string pt = originalText(ciphertext, fullKey2);
+            string fullKeyFormatted = formatKey(ciphertext, fullKey);
+            string plaintext = decrypt(ciphertext, fullKeyFormatted);
             double score = 0;
             for (int j = 0; j < ciphertext.length(); j += keyLength) {
-                if (j + partialKey.length() < pt.length()) {
-                    score += qgram.score(pt.substr(j, partialKey.length()));
+                if (j + partialKey.length() < plaintext.length()) {
+                    score += qgram.score(plaintext.substr(j, partialKey.length()));
                 }
             }
             keyCandidates[score] = partialKey;
@@ -101,7 +92,7 @@ int main() {
     nGramScorer qgram(ifstream(R"(C:\Users\zna58005\CLionProjects\vigenerecipher\quadgrams.txt)"));
     nGramScorer trigram(ifstream(R"(C:\Users\zna58005\CLionProjects\vigenerecipher\trigrams.txt)"));
     string ciphertext = formatCiphertext(
-            "Slycmiskhtvp, mh wrlinaevkm, zq jbe ckuompgs rlt mthws ay aiqylykurl zak ziqlpu wozfozbjehzmd cn gay bklwseau if gacdw wefkgum");
+            "Lffcwsyzdtyg, ca qylsxgtrkp, qg cvl cueublgv ibm gahgc gn witpbrebrv jgz vitcfn qvzpyfqfekqcw wu gki hzhwvvqn cm gkmjl seibwng");
     string alphabet = theAlphabet();
     map<double, string> keyCandidates;
     int rangeStart = 4;
@@ -110,9 +101,9 @@ int main() {
         int keyLength = i; // Need to fix keylength. Only works with length greater than 4.
         string keyBuilder = firstThreeKeyLetters(trigram, alphabet, ciphertext, keyLength, keyCandidates);
         string theKey = fullKey(qgram, alphabet, ciphertext, keyLength, keyBuilder, keyCandidates);
-        double bestScore = qgram.score(originalText(ciphertext, generateKey(ciphertext, theKey)));
+        double bestScore = qgram.score(decrypt(ciphertext, formatKey(ciphertext, theKey)));
         cout << "Score: " << setprecision(16) << bestScore << ", " << "Key length: " << keyLength << ", " << "Key: "
-             << theKey << "\n" << "Decrypted: " << originalText(ciphertext, generateKey(ciphertext, theKey))
+             << theKey << "\n" << "Decrypted: " << decrypt(ciphertext, formatKey(ciphertext, theKey))
              << "\n" << endl;
     }
     return EXIT_SUCCESS;
