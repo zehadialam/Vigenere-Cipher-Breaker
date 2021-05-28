@@ -44,6 +44,7 @@ string restoreOriginalFormat(const string &originalFormat, string modifiedFormat
     return restoredText;
 }
 
+// change to nGramPermutations for quadgram modification
 string trigramPermutations(int n, string alphabet) {
     string trigram{};
     for (int i = 0; i < 3; i++) {
@@ -53,6 +54,7 @@ string trigramPermutations(int n, string alphabet) {
     return trigram;
 }
 
+// rename to firstNKeyLetters for quadgram test
 string firstThreeKeyLetters(nGramScorer trigram, const string &alphabet, const string &ciphertext, int keyLength) {
     std::map<double, string> keyCandidates;
     string pad(keyLength - 3, 'A');
@@ -71,6 +73,7 @@ string firstThreeKeyLetters(nGramScorer trigram, const string &alphabet, const s
     return keyCandidates[keyCandidates.rbegin()->first];
 }
 
+// add an int n parameter for quintgram test
 string
 fullKey(nGramScorer quadgram, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder) {
     std::map<double, string> keyCandidates;
@@ -111,8 +114,7 @@ int main(int argc, char *argv[]) {
     int rangeStart = std::stoi(argv[2]);
     int rangeEnd = std::stoi(argv[3]);
     bool verboseMode = strcmp(argv[4], "0");
-    cout << "Estimated time to break the encryption and unlock the message: " << ceil(0.33 * (rangeEnd - rangeStart))
-         << " seconds\n" << endl;
+    cout << "Attempting to break the encryption and unlock the message...\n" << endl;
     auto startTime = std::chrono::high_resolution_clock::now();
     for (int i = rangeStart; i < rangeEnd; i++) {
         int keyLength = i; // Need to fix keylength. Only works with length greater than 4.
@@ -134,8 +136,9 @@ int main(int argc, char *argv[]) {
     auto timeTaken = elapsedTime.count() * 0.001;
     if (!verboseMode) {
         cout << "POTENTIAL MATCH FOUND\n" << endl;
+        cout << "KEY LENGTH: " << keyCandidates[keyCandidates.rbegin()->first].length() << endl;
         cout << "KEY: " << keyCandidates[keyCandidates.rbegin()->first] << "\n" << endl;
-        cout << "DECRYPTED MESSAGE:\n" << endl;
+        cout << "DECRYPTED MESSAGE:" << endl;
         cout << restoreOriginalFormat(originalCipherText, vigenereCipher::decrypt(formattedCipherText,
                                                                                   vigenereCipher::formatKey(
                                                                                           formattedCipherText,
