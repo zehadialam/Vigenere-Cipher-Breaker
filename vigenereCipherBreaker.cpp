@@ -111,7 +111,7 @@ printResults(int keyLength, const string &key, const string &originalCipherText,
 int main(int argc, char *argv[]) {
     if (argc != 5) {
         std::cerr << "Error: invalid number of command line arguments. Please use the following syntax:" << endl;
-        std::cerr << "./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbose mode]" << endl;
+        std::cerr << "./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbose mode]\n" << endl;
         std::cerr
                 << "Example: ./vigenereCipherBreaker \"Uvagxhvrshdm, fu uvagxhaoyq, eg kkw ttrgmxcw sjr jwmha fj mtczfeelhk jqi wxrujw ycdpmrktemxof aj hyh hvgjigre gx pvzuv tcixbts.\" 4 20 0"
                 << endl;
@@ -152,16 +152,23 @@ int main(int argc, char *argv[]) {
         printResults(keyLength, key, originalCipherText, formattedCipherText);
     }
     char input{};
-    cout << "Was the message successfully decrypted? [Y/N]";
+    cout << "Was the message successfully decrypted? [Y/N] ";
     std::cin >> input;
     if (tolower(input) == 'y') {
-        printf("\nTotal elapsed time for operation: %.2f seconds\n", timeTaken);
+        printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
     } else if (tolower(input) == 'n') {
+        // Since key lengths aren't correctly guessed, the whole range of keys will need to be tried
+        // Need to create a function for the loop that tries the range of keys
+        // Start with the key length candidate from first attempt. Then try all keys if that doesn't work
         cout << "\nEXECUTING A MORE AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
         nGramScorer quintgram(std::ifstream(R"(..\ngrams\quintgrams.txt)"));
         string keyBuilder = firstNKeyLetters(quadgram, 4, alphabet, formattedCipherText, keyLength);
         string tryKey = fullKey(quintgram, 4, alphabet, formattedCipherText, keyLength, keyBuilder);
+        endTime = std::chrono::high_resolution_clock::now();
+        elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        timeTaken = (double) elapsedTime.count() * 0.001;
         printResults(keyLength, tryKey, originalCipherText, formattedCipherText);
+        printf("Total elapsed time for operation: %.2f seconds\n\n", timeTaken);
     } else {
         cout << "Invalid response" << endl;
     }
