@@ -20,7 +20,7 @@ string formatCiphertext(const string &ciphertext) {
     string formattedCiphertext{};
     for (char c : ciphertext) {
         if (isalpha(c)) {
-            formattedCiphertext += toupper(c);
+            formattedCiphertext += (char) toupper(c);
         }
     }
     return formattedCiphertext;
@@ -32,9 +32,9 @@ string restoreOriginalFormat(const string &originalFormat, string modifiedFormat
     for (char i : originalFormat) {
         if (isalpha(i)) {
             if (isupper(i)) {
-                restoredText += toupper(modifiedFormat[j]);
+                restoredText += (char) toupper(modifiedFormat[j]);
             } else if (islower(i)) {
-                restoredText += tolower(modifiedFormat[j]);
+                restoredText += (char) tolower(modifiedFormat[j]);
             }
             j++;
         } else {
@@ -44,40 +44,37 @@ string restoreOriginalFormat(const string &originalFormat, string modifiedFormat
     return restoredText;
 }
 
-// change to nGramPermutations for quadgram modification
-string trigramPermutations(int n, string alphabet) {
-    string trigram{};
-    for (int i = 0; i < 3; i++) {
-        trigram += alphabet[n % 26];
-        n /= 26;
+string ngramPermutations(int n, int permutationCount, string alphabet) {
+    string ngram{};
+    for (int i = 0; i < n; i++) {
+        ngram += alphabet[permutationCount % 26];
+        permutationCount /= 26;
     }
-    return trigram;
+    return ngram;
 }
 
-// rename to firstNKeyLetters for quadgram test
-string firstThreeKeyLetters(nGramScorer trigram, const string &alphabet, const string &ciphertext, int keyLength) {
+string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength) {
     std::map<double, string> keyCandidates;
-    string pad(keyLength - 3, 'A');
-    for (int i = 0; i < (int) pow(26, 3); i++) {
-        string key = trigramPermutations(i, alphabet) + pad;
+    string pad(keyLength - n, 'A');
+    for (int i = 0; i < (int) pow(26, n); i++) {
+        string key = ngramPermutations(n, i, alphabet) + pad;
         string formattedKey = vigenereCipher::formatKey(ciphertext, key);
         string plaintext = vigenereCipher::decrypt(ciphertext, formattedKey);
         double score = 0;
         for (int j = 0; j < ciphertext.length(); j += keyLength) {
-            if (j + 3 < plaintext.length()) {
-                score += trigram.score(plaintext.substr(j, 3));
+            if (j + n < plaintext.length()) {
+                score += ngram.score(plaintext.substr(j, n));
             }
         }
-        keyCandidates[score] = key.substr(0, 3);
+        keyCandidates[score] = key.substr(0, n);
     }
     return keyCandidates[keyCandidates.rbegin()->first];
 }
 
-// add an int n parameter for quintgram test
 string
-fullKey(nGramScorer quadgram, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder) {
+fullKey(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder) {
     std::map<double, string> keyCandidates;
-    for (int i = 0; i < keyLength - 3; i++) {
+    for (int i = 0; i < keyLength - n; i++) {
         keyCandidates.clear();
         for (char c : alphabet) {
             string partialKey = keyBuilder + c;
@@ -88,7 +85,7 @@ fullKey(nGramScorer quadgram, const string &alphabet, const string &ciphertext, 
             double score = 0;
             for (int j = 0; j < ciphertext.length(); j += keyLength) {
                 if (j + partialKey.length() < plaintext.length()) {
-                    score += quadgram.score(plaintext.substr(j, partialKey.length()));
+                    score += ngram.score(plaintext.substr(j, partialKey.length()));
                 }
             }
             keyCandidates[score] = partialKey;
@@ -99,10 +96,25 @@ fullKey(nGramScorer quadgram, const string &alphabet, const string &ciphertext, 
     return keyCandidates[keyCandidates.rbegin()->first];
 }
 
+void
+printResults(int keyLength, const string &key, const string &originalCipherText, const string &formattedCipherText) {
+    cout << "POTENTIAL MATCH FOUND\n" << endl;
+    cout << "KEY LENGTH: " << keyLength << endl;
+    cout << "KEY: " << key << "\n" << endl;
+    cout << "DECRYPTED MESSAGE:" << endl;
+    cout << restoreOriginalFormat(originalCipherText, vigenereCipher::decrypt(formattedCipherText,
+                                                                              vigenereCipher::formatKey(
+                                                                                      formattedCipherText, key)))
+         << "\n" << endl;
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 5) {
         std::cerr << "Error: invalid number of command line arguments. Please use the following syntax:" << endl;
-        std::cerr << "./vigenereCipherBreaker ciphertext min keylength max keylength verbose mode" << endl;
+        std::cerr << "./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbose mode]" << endl;
+        std::cerr
+                << "Example: ./vigenereCipherBreaker \"Uvagxhvrshdm, fu uvagxhaoyq, eg kkw ttrgmxcw sjr jwmha fj mtczfeelhk jqi wxrujw ycdpmrktemxof aj hyh hvgjigre gx pvzuv tcixbts.\" 4 20 0"
+                << endl;
         exit(EXIT_FAILURE);
     }
     nGramScorer trigram(std::ifstream(R"(..\ngrams\trigrams.txt)"));
@@ -114,37 +126,44 @@ int main(int argc, char *argv[]) {
     int rangeStart = std::stoi(argv[2]);
     int rangeEnd = std::stoi(argv[3]);
     bool verboseMode = strcmp(argv[4], "0");
-    cout << "Attempting to break the encryption and unlock the message...\n" << endl;
+    cout << "ATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n" << endl;
     auto startTime = std::chrono::high_resolution_clock::now();
     for (int i = rangeStart; i < rangeEnd; i++) {
-        int keyLength = i; // Need to fix keylength. Only works with length greater than 4.
-        string keyBuilder = firstThreeKeyLetters(trigram, alphabet, formattedCipherText, keyLength);
-        string theKey = fullKey(quadgram, alphabet, formattedCipherText, keyLength, keyBuilder);
+        int tryKeyLength = i; // Need to fix keylength. Only works with length greater than 4.
+        string keyBuilder = firstNKeyLetters(trigram, 3, alphabet, formattedCipherText, tryKeyLength);
+        string tryKey = fullKey(quadgram, 3, alphabet, formattedCipherText, tryKeyLength, keyBuilder);
         double bestScore = quadgram.score(
-                vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, theKey)));
-        keyCandidates[bestScore] = theKey;
+                vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, tryKey)));
+        keyCandidates[bestScore] = tryKey;
         if (verboseMode) {
-            cout << "Score: " << std::setprecision(16) << bestScore << ", " << "Key length: " << keyLength << ", "
-                 << "Key: "
-                 << theKey << "\n" << "Decrypted: "
-                 << vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, theKey))
+            cout << "Score: " << std::setprecision(16) << bestScore << ", " << "Key length: " << tryKeyLength << ", "
+                 << "Key: " << tryKey << "\n"
+                 << "Decrypted: "
+                 << vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, tryKey))
                  << "\n" << endl;
         }
     }
     auto endTime = std::chrono::high_resolution_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    auto timeTaken = elapsedTime.count() * 0.001;
+    double timeTaken = (double) elapsedTime.count() * 0.001;
+    string key = keyCandidates[keyCandidates.rbegin()->first];
+    int keyLength = (int) keyCandidates[keyCandidates.rbegin()->first].length();
     if (!verboseMode) {
-        cout << "POTENTIAL MATCH FOUND\n" << endl;
-        cout << "KEY LENGTH: " << keyCandidates[keyCandidates.rbegin()->first].length() << endl;
-        cout << "KEY: " << keyCandidates[keyCandidates.rbegin()->first] << "\n" << endl;
-        cout << "DECRYPTED MESSAGE:" << endl;
-        cout << restoreOriginalFormat(originalCipherText, vigenereCipher::decrypt(formattedCipherText,
-                                                                                  vigenereCipher::formatKey(
-                                                                                          formattedCipherText,
-                                                                                          keyCandidates[keyCandidates.rbegin()->first])))
-             << "\n" << endl;
+        printResults(keyLength, key, originalCipherText, formattedCipherText);
     }
-    printf("Total elapsed time: %.2f seconds\n", timeTaken);
+    char input{};
+    cout << "Was the message successfully decrypted? [Y/N]";
+    std::cin >> input;
+    if (tolower(input) == 'y') {
+        printf("\nTotal elapsed time for operation: %.2f seconds\n", timeTaken);
+    } else if (tolower(input) == 'n') {
+        cout << "\nEXECUTING A MORE AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
+        nGramScorer quintgram(std::ifstream(R"(..\ngrams\quintgrams.txt)"));
+        string keyBuilder = firstNKeyLetters(quadgram, 4, alphabet, formattedCipherText, keyLength);
+        string tryKey = fullKey(quintgram, 4, alphabet, formattedCipherText, keyLength, keyBuilder);
+        printResults(keyLength, tryKey, originalCipherText, formattedCipherText);
+    } else {
+        cout << "Invalid response" << endl;
+    }
     return EXIT_SUCCESS;
 }
