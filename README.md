@@ -9,5 +9,5 @@ To run the program in a UNIX environment, ensure that GCC is installed, so that 
 $ make
 ```
 ### Windows
-To run the program on a Windows machine, use the Windows Subsystem for Linux. 
+To run the program on a Windows machine, use the Windows Subsystem for Linux.<br>
 The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.
