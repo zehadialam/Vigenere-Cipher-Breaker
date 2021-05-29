@@ -12,7 +12,7 @@ nGramScorer::nGramScorer(std::ifstream file) {
             for (char c : line) {
                 if (c == ' ') {
                     key = splitString;
-                    nGramLength = key.length();
+                    nGramLength = (int) key.length();
                     splitString = "";
                 } else {
                     splitString += c;

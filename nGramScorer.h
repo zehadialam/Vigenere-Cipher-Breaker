@@ -11,7 +11,7 @@ public:
 
 private:
     std::unordered_map<std::string, double> nGramFrequencies;
-    unsigned long long nGramLength;
+    int nGramLength;
     double sumValues{};
 };
 

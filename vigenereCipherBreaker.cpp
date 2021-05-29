@@ -12,10 +12,19 @@ using std::string;
 using std::cout;
 using std::endl;
 
+/**
+ * Return the English alphabet as a string
+ * @return the English alphabet
+ */
 string theAlphabet() {
     return "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 }
 
+/**
+ * Return all-caps ciphertext with spaces and punctuation removed.
+ * @param ciphertext the specified ciphertext
+ * @return all-caps ciphertext with spaces and punctuation removed.
+ */
 string formatCiphertext(const string &ciphertext) {
     string formattedCiphertext{};
     for (char c : ciphertext) {
@@ -26,6 +35,15 @@ string formatCiphertext(const string &ciphertext) {
     return formattedCiphertext;
 }
 
+/**
+ * Return the original format of the ciphertext, including letter casing, spaces, punctuation,
+ * and non-alphabetic characters
+ * @param originalFormat original ciphertext format
+ * @param modifiedFormat ciphertext format where the letter casing, spaces, punctuation,
+ * and non-alphabetic characters have been modified
+ * @return the original format of the ciphertext, including letter casing, spaces, punctuation,
+ * and non-alphabetic characters
+ */
 string restoreOriginalFormat(const string &originalFormat, string modifiedFormat) {
     string restoredText{};
     int j = 0;
@@ -96,6 +114,18 @@ fullKey(nGramScorer ngram, int n, const string &alphabet, const string &cipherte
     return keyCandidates[keyCandidates.rbegin()->first];
 }
 
+void printVerboseResults(double bestScore, int tryKeyLength, const string &tryKey, const string &originalCipherText,
+                         const string &formattedCipherText) {
+    cout << "Score: " << std::setprecision(16) << bestScore << ", " << "Key length: " << tryKeyLength << ", "
+         << "Key: " << tryKey << "\n"
+         << "Decrypted: "
+         << restoreOriginalFormat(originalCipherText, vigenereCipher::decrypt(formattedCipherText,
+                                                                              vigenereCipher::formatKey(
+                                                                                      formattedCipherText,
+                                                                                      tryKey)))
+         << "\n" << endl;
+}
+
 void
 printResults(int keyLength, const string &key, const string &originalCipherText, const string &formattedCipherText) {
     cout << "POTENTIAL MATCH FOUND\n" << endl;
@@ -108,49 +138,54 @@ printResults(int keyLength, const string &key, const string &originalCipherText,
          << "\n" << endl;
 }
 
+void
+breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, int rangeEnd, const string &alphabet,
+                const string &originalCipherText, const string &formattedCipherText, bool verboseMode) {
+    std::map<double, string> keyCandidates;
+    for (int i = rangeStart; i <= rangeEnd; i++) {
+        int tryKeyLength = i; // Need to fix keylength. Only works with length greater than 4.
+        string keyBuilder = firstNKeyLetters(n1, n, alphabet, formattedCipherText, tryKeyLength);
+        string tryKey = fullKey(n2, n, alphabet, formattedCipherText, tryKeyLength, keyBuilder);
+        double bestScore = n2.score(
+                vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, tryKey)));
+        keyCandidates[bestScore] = tryKey;
+        if (verboseMode) {
+            printVerboseResults(bestScore, tryKeyLength, tryKey, originalCipherText, formattedCipherText);
+        }
+    }
+    string key = keyCandidates[keyCandidates.rbegin()->first];
+    int keyLength = (int) keyCandidates[keyCandidates.rbegin()->first].length();
+    vigenereCipher::setKeyLength(keyLength);
+    if (!verboseMode) {
+        printResults(keyLength, key, originalCipherText, formattedCipherText);
+    }
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 5) {
         std::cerr << "Error: invalid number of command line arguments. Please use the following syntax:" << endl;
         std::cerr << "./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbose mode]\n" << endl;
         std::cerr
-                << "Example: ./vigenereCipherBreaker \"Uvagxhvrshdm, fu uvagxhaoyq, eg kkw ttrgmxcw sjr jwmha fj mtczfeelhk jqi wxrujw ycdpmrktemxof aj hyh hvgjigre gx pvzuv tcixbts.\" 4 20 0"
+                << "Example: ./vigenereCipherBreaker \"Uvagxhvrshdm, fu uvagxhaoyq, eg kkw ttrgmxcw sjr jwmha fj "
+                   "mtczfeelhk jqi wxrujw ycdpmrktemxof aj hyh hvgjigre gx pvzuv tcixbts.\" 4 20 0"
                 << endl;
         exit(EXIT_FAILURE);
     }
-    nGramScorer trigram(std::ifstream(R"(..\ngrams\trigrams.txt)"));
-    nGramScorer quadgram(std::ifstream(R"(..\ngrams\quadgrams.txt)"));
+    nGramScorer trigram(std::ifstream(R"(../ngrams/trigrams.txt)"));
+    nGramScorer quadgram(std::ifstream(R"(../ngrams/quadgrams.txt)"));
     string originalCipherText = argv[1];
     string formattedCipherText = formatCiphertext(originalCipherText);
     string alphabet = theAlphabet();
-    std::map<double, string> keyCandidates;
     int rangeStart = std::stoi(argv[2]);
     int rangeEnd = std::stoi(argv[3]);
     bool verboseMode = strcmp(argv[4], "0");
     cout << "ATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n" << endl;
     auto startTime = std::chrono::high_resolution_clock::now();
-    for (int i = rangeStart; i < rangeEnd; i++) {
-        int tryKeyLength = i; // Need to fix keylength. Only works with length greater than 4.
-        string keyBuilder = firstNKeyLetters(trigram, 3, alphabet, formattedCipherText, tryKeyLength);
-        string tryKey = fullKey(quadgram, 3, alphabet, formattedCipherText, tryKeyLength, keyBuilder);
-        double bestScore = quadgram.score(
-                vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, tryKey)));
-        keyCandidates[bestScore] = tryKey;
-        if (verboseMode) {
-            cout << "Score: " << std::setprecision(16) << bestScore << ", " << "Key length: " << tryKeyLength << ", "
-                 << "Key: " << tryKey << "\n"
-                 << "Decrypted: "
-                 << vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, tryKey))
-                 << "\n" << endl;
-        }
-    }
+    breakEncryption(trigram, quadgram, 3, rangeStart, rangeEnd, alphabet, originalCipherText, formattedCipherText,
+                    verboseMode);
     auto endTime = std::chrono::high_resolution_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     double timeTaken = (double) elapsedTime.count() * 0.001;
-    string key = keyCandidates[keyCandidates.rbegin()->first];
-    int keyLength = (int) keyCandidates[keyCandidates.rbegin()->first].length();
-    if (!verboseMode) {
-        printResults(keyLength, key, originalCipherText, formattedCipherText);
-    }
     char input{};
     cout << "Was the message successfully decrypted? [Y/N] ";
     std::cin >> input;
@@ -160,14 +195,15 @@ int main(int argc, char *argv[]) {
         // Since key lengths aren't correctly guessed, the whole range of keys will need to be tried
         // Need to create a function for the loop that tries the range of keys
         // Start with the key length candidate from first attempt. Then try all keys if that doesn't work
+        int keyLength = vigenereCipher::getKeyLength();
         cout << "\nEXECUTING A MORE AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
-        nGramScorer quintgram(std::ifstream(R"(..\ngrams\quintgrams.txt)"));
-        string keyBuilder = firstNKeyLetters(quadgram, 4, alphabet, formattedCipherText, keyLength);
-        string tryKey = fullKey(quintgram, 4, alphabet, formattedCipherText, keyLength, keyBuilder);
+        startTime = std::chrono::high_resolution_clock::now();
+        nGramScorer quintgram(std::ifstream(R"(../ngrams/quintgrams.txt)"));
+        breakEncryption(quadgram, quintgram, 4, keyLength, keyLength, alphabet, originalCipherText, formattedCipherText,
+                        false);
         endTime = std::chrono::high_resolution_clock::now();
         elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-        timeTaken = (double) elapsedTime.count() * 0.001;
-        printResults(keyLength, tryKey, originalCipherText, formattedCipherText);
+        timeTaken += (double) elapsedTime.count() * 0.001;
         printf("Total elapsed time for operation: %.2f seconds\n\n", timeTaken);
     } else {
         cout << "Invalid response" << endl;
