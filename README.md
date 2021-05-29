@@ -1,6 +1,7 @@
 # Vigenère cipher breaker
 
-A C++ implementation of Practical Cryptography's <a href="https://github.com/jameslyons/python_cryptanalysis/blob/master/break_vigenere.py">Vigenère cipher breaker</a> for improved speed, along with my own additions and features. More information about the algorithm that the program uses to break the Vigenère cipher can be found <a href="http://practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-vigenere-cipher-part-2/">here</a> and <a href="http://practicalcryptography.com/cryptanalysis/text-characterisation/quadgrams/">here</a>.
+A C++ implementation of Practical Cryptography's <a href="https://github.com/jameslyons/python_cryptanalysis/blob/master/break_vigenere.py">Vigenère cipher breaker</a> for improved speed, along with my own additions and features. More information about the algorithm that the program uses to break the Vigenère cipher can be found <a href="http://practicalcryptography.com/cryptanalysis/stochastic-searching/cryptanalysis-vigenere-cipher-part-2/">here</a> and <a href="http://practicalcryptography.com/cryptanalysis/text-characterisation/quadgrams/">here</a>.<br>
+More information on the Vigenère cipher itself can be found <a href="https://medium.com/@pushkarkadam1994/cryptography-vigen%C3%A8re-cipher-e188fcb96bae">here</a>
 
 ## Running the program
 ### UNIX
