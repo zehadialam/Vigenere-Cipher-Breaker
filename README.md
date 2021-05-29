@@ -9,4 +9,7 @@ To run the program in a UNIX environment, ensure that GCC is installed, so that 
 $ make
 ```
 ### Windows
-On Windows machines, use the Windows Subsystem for Linux. The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.
+To run the program on a Windows machine, use the Windows Subsystem for Linux. The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.
+``` powershell
+dism.exe /online /enable-feature /featurename:Microsoft-Windows-Subsystem-Linux /all /norestart
+```
