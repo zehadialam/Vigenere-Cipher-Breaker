@@ -1,8 +1,8 @@
 #include <chrono>
 #include <cstring>
+#include <functional>
 #include <iomanip>
 #include <iostream>
-#include <unordered_map>
 #include <map>
 #include <valarray>
 #include "nGramScorer.h"
@@ -161,6 +161,21 @@ breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, in
     }
 }
 
+double
+totalTimeTaken(std::chrono::time_point<std::chrono::high_resolution_clock> startTime,
+               const std::function<void(nGramScorer, nGramScorer, int, int, int, string, string, string,
+                                        bool)> &breakEncryption,
+               const nGramScorer &n1, const nGramScorer &n2, int n, int rangeStart, int rangeEnd,
+               const string &alphabet, string originalCipherText,
+               const string &formattedCipherText, bool verboseMode) {
+    breakEncryption(n1, n2, n, rangeStart, rangeEnd, alphabet, std::move(originalCipherText), formattedCipherText,
+                    verboseMode);
+    auto endTime = std::chrono::high_resolution_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    double timeTaken = (double) elapsedTime.count() * 0.001;
+    return timeTaken;
+}
+
 int main(int argc, char *argv[]) {
     if (argc != 5) {
         std::cerr << "Error: invalid number of command line arguments. Please use the following syntax:" << endl;
@@ -181,11 +196,8 @@ int main(int argc, char *argv[]) {
     bool verboseMode = strcmp(argv[4], "0");
     cout << "ATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n" << endl;
     auto startTime = std::chrono::high_resolution_clock::now();
-    breakEncryption(trigram, quadgram, 3, rangeStart, rangeEnd, alphabet, originalCipherText, formattedCipherText,
-                    verboseMode);
-    auto endTime = std::chrono::high_resolution_clock::now();
-    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-    double timeTaken = (double) elapsedTime.count() * 0.001;
+    double timeTaken = totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, rangeStart, rangeEnd, alphabet,
+                                      originalCipherText, formattedCipherText, verboseMode);
     char input{};
     cout << "Was the message successfully decrypted? [Y/N] ";
     std::cin >> input;
@@ -199,11 +211,8 @@ int main(int argc, char *argv[]) {
         cout << "\nEXECUTING A MORE AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
         startTime = std::chrono::high_resolution_clock::now();
         nGramScorer quintgram(std::ifstream(R"(../ngrams/quintgrams.txt)"));
-        breakEncryption(quadgram, quintgram, 4, keyLength, keyLength, alphabet, originalCipherText, formattedCipherText,
-                        false);
-        endTime = std::chrono::high_resolution_clock::now();
-        elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-        timeTaken += (double) elapsedTime.count() * 0.001;
+        timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, keyLength, keyLength, alphabet,
+                                   originalCipherText, formattedCipherText, false);
         printf("Total elapsed time for operation: %.2f seconds\n\n", timeTaken);
     } else {
         cout << "Invalid response" << endl;
