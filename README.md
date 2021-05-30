@@ -41,5 +41,5 @@ Once WSL has been set up, the instructions provided for UNIX can be followed to 
 ## Example Runs
 The following are a few examples of what running the program is like: <br><br>
 <img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example1.png" width=80%><br>
-<style="text-align: center><b> Verbose mode off </b></style>
+<style="text-align: center"><b> Verbose mode off </b></style>
 <img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example2.png" width=80%>
