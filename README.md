@@ -11,7 +11,7 @@ gcc --version
 ```
 To compile the program, navigate to the directory where the files are saved and execute the following command:
 ```
-$ make
+make
 ```
 This will execute the following commands, leading to the compiled program:
 ```
