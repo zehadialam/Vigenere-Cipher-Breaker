@@ -9,6 +9,13 @@ To run the program in a UNIX environment, ensure that GCC is installed, so that 
 ```
 gcc --version
 ```
+If GCC is installed, there will be a message like the following (with the version indicated):
+```
+gcc (Ubuntu 9.3.0-17ubuntu1~20.04) 9.3.0
+Copyright (C) 2019 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
 To compile the program, navigate to the directory where the files are saved and execute the following command:
 ```
 make
