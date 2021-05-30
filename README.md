@@ -11,9 +11,9 @@ $ make
 ```
 This will execute the following commands, leading to the compiled program:
 ```
-g++ -c vigenereCipherBreaker.cpp
-g++ -c nGramScorer.cpp
-g++ -c vigenereCipher.cpp
+g++ -c vigenereCipherBreaker.cpp -std=c++17
+g++ -c nGramScorer.cpp -std=c++17
+g++ -c vigenereCipher.cpp -std=c++17
 g++ -o vigenereCipherBreaker vigenereCipherBreaker.o nGramScorer.o vigenereCipher.o
 ```
 ### Windows
