@@ -28,5 +28,6 @@ The ciphertext command-line argument should be a string surrounded by double-quo
 The keylengths should be integer values. <br>
 Verbose mode should be given a value of 1 or 0 to indicate true or false, respectively.
 ### Windows
-To run the program on a Windows machine, use the Windows Subsystem for Linux.<br>
-The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.
+It is encouraged to use the Windows Subsystem for Linux (WSL) to run the program on a Windows machine.<br>
+The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.<br>
+Once WSL has been set up, the instructions provided for UNIX can be followed to run the program. 
