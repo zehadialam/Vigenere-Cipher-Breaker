@@ -40,3 +40,4 @@ The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/
 Once WSL has been set up, the instructions provided for UNIX can be followed to run the program. 
 ## Example Runs
 The following are a few examples of what running the program is like:
+![screenshot1](https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example1.png)
