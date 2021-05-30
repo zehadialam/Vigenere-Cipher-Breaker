@@ -39,4 +39,4 @@ It is encouraged to use the Windows Subsystem for Linux (WSL) to run the program
 The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.<br>
 Once WSL has been set up, the instructions provided for UNIX can be followed to run the program. 
 ## Example Runs
-The following displays a few examples of what running the program is like:
+The following are a few examples of what running the program is like:
