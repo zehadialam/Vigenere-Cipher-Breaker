@@ -9,6 +9,13 @@ To run the program in a UNIX environment, ensure that GCC is installed, so that 
 ```
 $ make
 ```
+This will execute the following commands, leading to the compiled program:
+```
+g++ -c vigenereCipherBreaker.cpp
+g++ -c nGramScorer.cpp
+g++ -c vigenereCipher.cpp
+g++ -o vigenereCipherBreaker vigenereCipherBreaker.o nGramScorer.o vigenereCipher.o
+```
 ### Windows
 To run the program on a Windows machine, use the Windows Subsystem for Linux.<br>
 The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.
