@@ -40,7 +40,7 @@ The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/
 Once WSL has been set up, the instructions provided for UNIX can be followed to run the program. 
 ## Example Runs
 The following are a few examples of what running the program is like: <br><br>
-`Verbose mode off`:<br><br>
-<img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example1.png" width=80%><br>
-`Verbose mode on`:<br><br>
+*Verbose mode off*:<br><br>
+<img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example1.png" width=80%><br><br>
+*Verbose mode on*:<br><br>
 <img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example2.png" width=80%>
