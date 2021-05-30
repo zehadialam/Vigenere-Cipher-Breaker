@@ -20,13 +20,13 @@ g++ -c nGramScorer.cpp -std=c++17
 g++ -c vigenereCipher.cpp -std=c++17
 g++ -o vigenereCipherBreaker vigenereCipherBreaker.o nGramScorer.o vigenereCipher.o
 ```
-To run the program, use the following syntax: <br>
-The ciphertext command-line argument should be a string surrounded by double-quotes. <br>
-The keylengths should be integer values. <br>
-Verbose mode should be given a value of 1 or 0 to indicate true or false, respectively.
+To run the program, use the following syntax:
 ```
 ./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbosemode]
 ```
+The ciphertext command-line argument should be a string surrounded by double-quotes. <br>
+The keylengths should be integer values. <br>
+Verbose mode should be given a value of 1 or 0 to indicate true or false, respectively.
 ### Windows
 To run the program on a Windows machine, use the Windows Subsystem for Linux.<br>
 The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.
