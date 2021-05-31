@@ -5,7 +5,7 @@ More information on the Vigenère cipher itself can be found <a href="https://me
 
 ## Running the program
 ### UNIX
-To run the program in a UNIX environment, ensure that GCC is installed, so that the source code files can be compiled. This can be checked by running the following command:
+To run the program in a UNIX environment with the provided Makefile, ensure that GCC is installed, so that the source code files can be compiled. This can be checked by running the following command:
 ```
 gcc --version
 ```
