@@ -44,3 +44,5 @@ The following are a few examples of what running the program is like: <br><br>
 <img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example1.png" width=80%><br><br>
 **Verbose mode on**:<br><br>
 <img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example2.png" width=80%>
+## Reliability of Key Cracking
+Depending on the length of the ciphertext and the length of the encryption key, the program will **not** always be successful. Since the program utilizes statistics to narrow down the range of possible keys to plausible keys, certain criteria have to be met to ensure reliability. A significant weakness of the Vigenère cipher is the repeating occurrence of the key throughout the text. Higher repetitions have a higher chance of being cracked. If the key is at most 25% the length of the overall ciphertext, that should yield good results.
