@@ -32,7 +32,7 @@ To run the program, use the following syntax:
 ./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbosemode]
 ```
 The ciphertext command-line argument should be a string surrounded by double-quotes. <br>
-The keylengths should be integer values. <br>
+The key lengths should be integer values. <br>
 Verbose mode should be given a value of 1 or 0 to indicate true or false, respectively.
 ### Windows
 It is encouraged to use the Windows Subsystem for Linux (WSL) to run the program on a Windows machine.<br>
