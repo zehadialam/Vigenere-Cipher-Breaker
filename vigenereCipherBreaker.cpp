@@ -79,13 +79,13 @@ string ngramPermutation(int n, int permutationCount, string alphabet) {
 }
 
 /**
- * Return the first n letters of the decryption key
+ * Return the first n letters of the potential decryption key
  * @param ngram a particular nGramScorer object
  * @param n the number of characters making up the ngram
- * @param alphabet the english alphabet
+ * @param alphabet the English alphabet
  * @param ciphertext the ciphertext to be decrypted
  * @param keyLength the number of characters of the key
- * @return the first n letters of the decryption key
+ * @return the first n letters of the potential decryption key
  */
 string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength) {
     std::map<double, string> keyCandidates;
@@ -105,6 +105,16 @@ string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const 
     return keyCandidates[keyCandidates.rbegin()->first];
 }
 
+/**
+ * Return the full potential decryption key
+ * @param ngram a particular nGramScorer object
+ * @param n the number of characters making up the ngram
+ * @param alphabet the English alphabet
+ * @param ciphertext the ciphertext to be decrypted
+ * @param keyLength the number of characters of the key
+ * @param keyBuilder the result of the firstNKeyLetters() function
+ * @return the full potential decryption key
+ */
 string
 fullKey(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder) {
     std::map<double, string> keyCandidates;
@@ -130,6 +140,15 @@ fullKey(nGramScorer ngram, int n, const string &alphabet, const string &cipherte
     return keyCandidates[keyCandidates.rbegin()->first];
 }
 
+/**
+ * Prints the verbose results of an attempt to break the decryption key
+ * @param bestScore the best ngram score of a string
+ * @param tryKeyLength the length of a potential decryption key
+ * @param tryKey a potential decryption key
+ * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic
+ * characters
+ * @param formattedCipherText all-caps ciphertext with spaces and punctuation removed
+ */
 void printVerboseResults(double bestScore, int tryKeyLength, const string &tryKey, const string &originalCipherText,
                          const string &formattedCipherText) {
     cout << "Score: " << std::setprecision(16) << bestScore << ", " << "Key length: " << tryKeyLength << ", "
@@ -142,6 +161,14 @@ void printVerboseResults(double bestScore, int tryKeyLength, const string &tryKe
          << "\n" << endl;
 }
 
+/**
+ * Prints the non-verbose results of an attempt to break the decryption key
+ * @param keyLength the length of the potential decryption key
+ * @param key a potential decryption key
+ * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic
+ * characters
+ * @param formattedCipherText all-caps ciphertext with spaces and punctuation removed
+ */
 void
 printResults(int keyLength, const string &key, const string &originalCipherText, const string &formattedCipherText) {
     cout << "POTENTIAL MATCH FOUND\n" << endl;
@@ -154,6 +181,19 @@ printResults(int keyLength, const string &key, const string &originalCipherText,
          << "\n" << endl;
 }
 
+/**
+ * Constructs a key based on ngram scoring to potentially decrypt the message
+ * @param n1 an nGramScorer object
+ * @param n2 an nGramScorer object
+ * @param n the number of characters making up the ngram
+ * @param rangeStart the minimum key length to try
+ * @param rangeEnd the maximum key length to try
+ * @param alphabet the English alphabet
+ * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic
+ * characters
+ * @param formattedCipherText all-caps ciphertext with spaces and punctuation removed
+ * @param verboseMode specify whether or not to use verbose mode
+ */
 void
 breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, int rangeEnd, const string &alphabet,
                 const string &originalCipherText, const string &formattedCipherText, bool verboseMode) {
@@ -177,6 +217,22 @@ breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, in
     }
 }
 
+/**
+ * Return the total elapsed time to run the breakEncryption() function
+ * @param startTime the start value for the timer
+ * @param breakEncryption the breakEncryption() function
+ * @param n1 an nGramScorer object
+ * @param n2 an nGramScorer object
+ * @param n the number of characters making up the ngram
+ * @param rangeStart the minimum key length to try
+ * @param rangeEnd the maximum key length to try
+ * @param alphabet the English alphabet
+ * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic
+ * characters
+ * @param formattedCipherText all-caps ciphertext with spaces and punctuation removed
+ * @param verboseMode specify whether or not to use verbose mode
+ * @return the total elapsed time to run the breakEncryption() function
+ */
 double
 totalTimeTaken(std::chrono::time_point<std::chrono::high_resolution_clock> startTime,
                const std::function<void(nGramScorer, nGramScorer, int, int, int, string, string, string,
