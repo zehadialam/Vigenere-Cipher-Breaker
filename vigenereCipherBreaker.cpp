@@ -229,20 +229,20 @@ int main(int argc, char *argv[]) {
         cout << "Was the message successfully decrypted? [Y/N] ";
         std::cin >> input;
         if (tolower(input) == 'y') {
-            printf("Total elapsed time for operation: %.2f seconds\n\n", timeTaken);
+            printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
         } else if (tolower(input) == 'n') {
             cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n" << endl;
             startTime = std::chrono::high_resolution_clock::now();
-            timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart, rangeEnd,
+            timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart + 1, rangeEnd,
                                         alphabet,
                                         originalCipherText, formattedCipherText, false);
             cout << "Was the message successfully decrypted? [Y/N] ";
             std::cin >> input;
             if (tolower(input) == 'y') {
-                printf("Total elapsed time for operation: %.2f seconds\n\n", timeTaken);
+                printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
             } else if (tolower(input) == 'n') {
-                cout << "The properties of the message are such that it is beyond the capabilities of this program to decipher." << endl;
-                printf("Total elapsed time for operation: %.2f seconds\n\n", timeTaken);
+                cout << "\nThe properties of the message are such that it is beyond the capabilities of this program to decipher." << endl;
+                printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
             }
         }
     } else {
