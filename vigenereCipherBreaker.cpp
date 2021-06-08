@@ -258,8 +258,8 @@ int main(int argc, char *argv[]) {
                 << endl;
         exit(EXIT_FAILURE);
     }
-    nGramScorer trigram(std::ifstream(R"(../ngrams/trigrams.txt)"));
-    nGramScorer quadgram(std::ifstream(R"(../ngrams/quadgrams.txt)"));
+    nGramScorer trigram(std::ifstream(R"(ngrams/trigrams.txt)"));
+    nGramScorer quadgram(std::ifstream(R"(ngrams/quadgrams.txt)"));
     string originalCipherText = argv[1];
     string formattedCipherText = formatCiphertext(originalCipherText);
     string alphabet = theAlphabet();
@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
         int keyLength = vigenereCipher::getKeyLength();
         cout << "\nEXECUTING A MORE AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
         startTime = std::chrono::high_resolution_clock::now();
-        nGramScorer quintgram(std::ifstream(R"(../ngrams/quintgrams.txt)"));
+        nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
         timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, keyLength, keyLength, alphabet,
                                     originalCipherText, formattedCipherText, false);
         cout << "Was the message successfully decrypted? [Y/N] ";
