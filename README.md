@@ -35,7 +35,7 @@ The ciphertext command-line argument should be a string surrounded by double-quo
 The key lengths should be integer values. <br>
 Verbose mode should be given a value of 1 or 0 to indicate true or false, respectively.
 ### Windows
-It is encouraged to use the Windows Subsystem for Linux (WSL) to run the program on a Windows machine.<br>
+It is recommended to use the Windows Subsystem for Linux (WSL) to run the program on a Windows machine.<br>
 The Microsoft website has <a href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">documentation</a> on how to do this.<br>
 Once WSL has been set up, the instructions provided for UNIX can be followed to run the program. 
 ## Example Runs
@@ -45,4 +45,4 @@ The following are a few examples of what running the program is like: <br><br>
 **Verbose mode on**:<br><br>
 <img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example2.png" width=80%>
 ## Reliability of Key Cracking
-Depending on the length of the ciphertext and the length of the encryption key, the program will **not** always be successful. Since the program utilizes statistics to determine the probability that a particular key is the right one, certain criteria have to be met to ensure reliability (e.g. a small key length to ciphertext length ratio). A significant weakness of the Vigenère cipher is the repeating occurrence of the key throughout the text. Higher repetitions have a higher chance of being cracked. The program should be effective and successful most of the time if the key is at most 25% the length of the ciphertext (without spaces, punctuation, and other non-alphabetic characters).
+Depending on the length of the ciphertext and the length of the encryption key, the program will **not** always be successful. Since the program utilizes statistics to determine the probability that a particular key is the right one, certain criteria have to be met to ensure reliability (e.g. a small key-length to ciphertext length ratio). A significant weakness of the Vigenère cipher is the repeating occurrence of the key throughout the text. Higher repetitions have a higher chance of being cracked. The program should be effective and successful most of the time if the key is at most 25% the length of the ciphertext (without spaces, punctuation, and other non-alphabetic characters).
