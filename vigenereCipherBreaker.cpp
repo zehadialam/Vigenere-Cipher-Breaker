@@ -116,7 +116,7 @@ string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const 
  * @return the full potential decryption key
  */
 string
-fullKey(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder) {
+fullKeyNormal(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder) {
     std::map<double, string> keyCandidates;
     for (int i = 0; i < keyLength - n; i++) {
         keyCandidates.clear();
@@ -135,6 +135,60 @@ fullKey(nGramScorer ngram, int n, const string &alphabet, const string &cipherte
             keyCandidates[score] = partialKey;
         }
         //cout << keyCandidates[keyCandidates.rbegin()->first] << endl;
+        keyBuilder = keyCandidates[keyCandidates.rbegin()->first];
+    }
+    return keyCandidates[keyCandidates.rbegin()->first];
+}
+
+/**
+ * Return the full potential decryption key in a stronger deciphering attempt
+ * @param ngram a particular nGramScorer object
+ * @param n the number of characters making up the ngram
+ * @param alphabet the English alphabet
+ * @param ciphertext the ciphertext to be decrypted
+ * @param keyLength the number of characters of the key
+ * @param keyBuilder the result of the firstNKeyLetters() function
+ * @return the full potential decryption key in a stronger deciphering attempt
+ */
+string
+fullKeyStronger(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength, string keyBuilder) {
+    std::map<double, string> keyCandidates;
+    for (int i = 0; i < (int) (keyLength / 3) - n; i++) {
+        keyCandidates.clear();
+        for (int j = 0; j < (int) pow(26, 3); j++) {
+            string partialKey = keyBuilder + ngramPermutation(3, j, alphabet);
+            string pad(keyLength - partialKey.length(), 'A');
+            string fullKey = partialKey + pad;
+            string fullKeyFormatted = vigenereCipher::formatKey(ciphertext, fullKey);
+            string plaintext = vigenereCipher::decrypt(ciphertext, fullKeyFormatted);
+            double score = 0;
+            for (int k = 0; k < ciphertext.length(); k += keyLength) {
+                if (k + partialKey.length() < plaintext.length()) {
+                    score += ngram.score(plaintext.substr(k, partialKey.length()));
+                }
+            }
+            keyCandidates[score] = partialKey;
+        }
+        // cout << keyCandidates[keyCandidates.rbegin()->first] << endl;
+        keyBuilder = keyCandidates[keyCandidates.rbegin()->first];
+    }
+    for (int i = (int) keyBuilder.length(); i < keyLength; i++) {
+        keyCandidates.clear();
+        for (char c : alphabet) {
+            string partialKey = keyBuilder + c;
+            string pad(keyLength - partialKey.length(), 'A');
+            string fullKey = partialKey + pad;
+            string fullKeyFormatted = vigenereCipher::formatKey(ciphertext, fullKey);
+            string plaintext = vigenereCipher::decrypt(ciphertext, fullKeyFormatted);
+            double score = 0;
+            for (int j = 0; j < ciphertext.length(); j += keyLength) {
+                if (j + partialKey.length() < plaintext.length()) {
+                    score += ngram.score(plaintext.substr(j, partialKey.length()));
+                }
+            }
+            keyCandidates[score] = partialKey;
+        }
+        // cout << keyCandidates[keyCandidates.rbegin()->first] << endl;
         keyBuilder = keyCandidates[keyCandidates.rbegin()->first];
     }
     return keyCandidates[keyCandidates.rbegin()->first];
@@ -196,12 +250,17 @@ printResults(int keyLength, const string &key, const string &originalCipherText,
  */
 void
 breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, int rangeEnd, const string &alphabet,
-                const string &originalCipherText, const string &formattedCipherText, bool verboseMode) {
+                const string &originalCipherText, const string &formattedCipherText, bool verboseMode, bool aggressive, bool accommodateShortKey) {
     std::map<double, string> keyCandidates;
     for (int i = rangeStart; i <= rangeEnd; i++) {
         int tryKeyLength = i; // Need to fix keylength. Only works with length greater than 4.
         string keyBuilder = firstNKeyLetters(n1, n, alphabet, formattedCipherText, tryKeyLength);
-        string tryKey = fullKey(n2, n, alphabet, formattedCipherText, tryKeyLength, keyBuilder);
+        string tryKey{};
+        if (aggressive && !accommodateShortKey) {
+            tryKey = fullKeyStronger(n2, n, alphabet, formattedCipherText, tryKeyLength, keyBuilder);
+        } else {
+            tryKey = fullKeyNormal(n2, n, alphabet, formattedCipherText, tryKeyLength, keyBuilder);
+        }
         double bestScore = n2.score(
                 vigenereCipher::decrypt(formattedCipherText, vigenereCipher::formatKey(formattedCipherText, tryKey)));
         keyCandidates[bestScore] = tryKey;
@@ -236,12 +295,12 @@ breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, in
 double
 totalTimeTaken(std::chrono::time_point<std::chrono::high_resolution_clock> startTime,
                const std::function<void(nGramScorer, nGramScorer, int, int, int, string, string, string,
-                                        bool)> &breakEncryption,
+                                        bool, bool, bool)> &breakEncryption,
                const nGramScorer &n1, const nGramScorer &n2, int n, int rangeStart, int rangeEnd,
                const string &alphabet, string originalCipherText,
-               const string &formattedCipherText, bool verboseMode) {
+               const string &formattedCipherText, bool verboseMode, bool aggressive, bool accommodateShortKey) {
     breakEncryption(n1, n2, n, rangeStart, rangeEnd, alphabet, std::move(originalCipherText), formattedCipherText,
-                    verboseMode);
+                    verboseMode, aggressive, accommodateShortKey);
     auto endTime = std::chrono::high_resolution_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     double timeTaken = (double) elapsedTime.count() * 0.001;
@@ -266,10 +325,11 @@ int main(int argc, char *argv[]) {
     int rangeStart = std::stoi(argv[2]);
     int rangeEnd = std::stoi(argv[3]);
     bool verboseMode = strcmp(argv[4], "0");
+    bool accommodateShortKey;
     cout << "\nATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n" << endl;
     auto startTime = std::chrono::high_resolution_clock::now();
     double timeTaken = totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, rangeStart, rangeEnd, alphabet,
-                                      originalCipherText, formattedCipherText, verboseMode);
+                                      originalCipherText, formattedCipherText, verboseMode, false, false);
     char input{};
     cout << "Was the message successfully decrypted? [Y/N] ";
     std::cin >> input;
@@ -277,28 +337,51 @@ int main(int argc, char *argv[]) {
         printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
     } else if (tolower(input) == 'n') {
         int keyLength = vigenereCipher::getKeyLength();
-        cout << "\nEXECUTING A MORE AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
+        if (keyLength < 12) {
+            accommodateShortKey = true;
+        } else {
+            accommodateShortKey = false;
+        }
+        cout << "\nEXECUTING A STRONGER ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
         startTime = std::chrono::high_resolution_clock::now();
-        nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
-        timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, keyLength, keyLength, alphabet,
-                                    originalCipherText, formattedCipherText, false);
+        timeTaken += totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, keyLength, keyLength, alphabet,
+                                    originalCipherText, formattedCipherText, false, true, accommodateShortKey);
         cout << "Was the message successfully decrypted? [Y/N] ";
         std::cin >> input;
         if (tolower(input) == 'y') {
             printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
         } else if (tolower(input) == 'n') {
-            cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n" << endl;
+            if (keyLength < 15) {
+                accommodateShortKey = true;
+            } else {
+                accommodateShortKey = false;
+            }
+            cout << "\nEXECUTING AN AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
             startTime = std::chrono::high_resolution_clock::now();
-            timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart + 1, rangeEnd,
-                                        alphabet,
-                                        originalCipherText, formattedCipherText, false);
+            nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
+            timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, keyLength, keyLength, alphabet,
+                                        originalCipherText, formattedCipherText, false, true, accommodateShortKey);
             cout << "Was the message successfully decrypted? [Y/N] ";
             std::cin >> input;
             if (tolower(input) == 'y') {
                 printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
             } else if (tolower(input) == 'n') {
-                cout << "\nThe properties of the message are such that it is beyond the capabilities of this program to decipher." << endl;
-                printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
+                if (rangeStart == 4) {
+                    rangeStart = 5;
+                }
+                cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n" << endl;
+                startTime = std::chrono::high_resolution_clock::now();
+                timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart, rangeEnd,
+                                            alphabet,
+                                            originalCipherText, formattedCipherText, false, true, true);
+                cout << "Was the message successfully decrypted? [Y/N] ";
+                std::cin >> input;
+                if (tolower(input) == 'y') {
+                    printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
+                } else if (tolower(input) == 'n') {
+                    cout << "\nThe properties of the message are such that it is beyond the capabilities of this program to decipher." << endl;
+                    printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
+                }
             }
         }
     } else {
