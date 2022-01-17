@@ -32,7 +32,7 @@ nGramScorer::nGramScorer(std::ifstream file) {
 double nGramScorer::score(const std::string &text) {
     double score = 0;
     double floor = log10(0.01) - log10(sumValues);
-    for (int i = 0; i < text.length() - nGramLength + 1; i++) {
+    for (int i = 0; i < (int) text.length() - nGramLength + 1; i++) {
         if (nGramFrequencies.count(text.substr(i, nGramLength))) {
             score += nGramFrequencies[text.substr(i, nGramLength)];
         } else {
