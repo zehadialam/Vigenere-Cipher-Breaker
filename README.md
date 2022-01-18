@@ -22,10 +22,10 @@ make
 ```
 This will execute the following commands, leading to the compiled program:
 ```
-g++ -c vigenereCipherBreaker.cpp -std=c++17
-g++ -c nGramScorer.cpp -std=c++17
-g++ -c vigenereCipher.cpp -std=c++17
-g++ -o vigenereCipherBreaker vigenereCipherBreaker.o nGramScorer.o vigenereCipher.o
+g++-11 -c vigenereCipherBreaker.cpp -std=c++17 -O2 -Wextra
+g++-11 -c nGramScorer.cpp -std=c++17 -O2 -Wextra
+g++-11 -c vigenereCipher.cpp -std=c++17 -O2 -Wextra
+g++-11 -o vigenereCipherBreaker vigenereCipherBreaker.o nGramScorer.o vigenereCipher.o -lpthread -O2 -Wextra
 ```
 To run the program, use the following syntax:
 ```
