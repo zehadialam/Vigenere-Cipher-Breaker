@@ -11,7 +11,6 @@
 
 using std::string;
 using std::cout;
-using std::endl;
 
 /**
  * Return the English alphabet as a string
@@ -215,7 +214,7 @@ void printVerboseResults(double bestScore, int tryKeyLength, const string &tryKe
                                                                               vigenereCipher::formatKey(
                                                                                       formattedCipherText,
                                                                                       tryKey)))
-         << "\n" << endl;
+         << "\n\n";
 }
 
 /**
@@ -228,14 +227,14 @@ void printVerboseResults(double bestScore, int tryKeyLength, const string &tryKe
  */
 void
 printResults(int keyLength, const string &key, const string &originalCipherText, const string &formattedCipherText) {
-    cout << "POTENTIAL MATCH FOUND\n" << endl;
-    cout << "KEY LENGTH: " << keyLength << endl;
-    cout << "KEY: " << key << "\n" << endl;
-    cout << "DECRYPTED MESSAGE:" << endl;
+    cout << "POTENTIAL MATCH FOUND\n" << "\n";
+    cout << "KEY LENGTH: " << keyLength << "\n";
+    cout << "KEY: " << key << "\n" << "\n";
+    cout << "DECRYPTED MESSAGE:" << "\n";
     cout << restoreOriginalFormat(originalCipherText, vigenereCipher::decrypt(formattedCipherText,
                                                                               vigenereCipher::formatKey(
                                                                                       formattedCipherText, key)))
-         << "\n" << endl;
+         << "\n\n";
 }
 
 /**
@@ -338,12 +337,12 @@ totalTimeTaken(std::chrono::time_point<std::chrono::high_resolution_clock> start
 
 int main(int argc, char *argv[]) {
     if (argc != 5) {
-        std::cerr << "Error: invalid number of command line arguments. Please use the following syntax:" << endl;
-        std::cerr << "./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbose mode]\n" << endl;
+        std::cerr << "Error: invalid number of command line arguments. Please use the following syntax:" << "\n";
+        std::cerr << "./vigenereCipherBreaker [ciphertext] [min keylength] [max keylength] [verbose mode]\n" << "\n";
         std::cerr
                 << "Example: ./vigenereCipherBreaker \"Uvagxhvrshdm, fu uvagxhaoyq, eg kkw ttrgmxcw sjr jwmha fj "
                    "mtczfeelhk jqi wxrujw ycdpmrktemxof aj hyh hvgjigre gx pvzuv tcixbts.\" 4 20 0"
-                << endl;
+                << "\n";
         exit(EXIT_FAILURE);
     }
     nGramScorer trigram(std::ifstream(R"(ngrams/trigrams.txt)"));
@@ -361,7 +360,7 @@ int main(int argc, char *argv[]) {
     } else {
         multithread = false;
     }
-    cout << "\nATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n" << endl;
+    cout << "\nATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n\n";
     auto startTime = std::chrono::high_resolution_clock::now();
     double timeTaken = totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, rangeStart, rangeEnd, alphabet,
                                       originalCipherText, formattedCipherText, verboseMode, false, false, multithread);
@@ -377,7 +376,7 @@ int main(int argc, char *argv[]) {
         } else {
             accommodateShortKey = false;
         }
-        cout << "\nEXECUTING A STRONGER ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
+        cout << "\nEXECUTING A STRONGER ATTEMPT TO BREAK THE ENCRYPTION...\n\n";
         startTime = std::chrono::high_resolution_clock::now();
         timeTaken += totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, keyLength, keyLength, alphabet,
                                     originalCipherText, formattedCipherText, false, true, accommodateShortKey, false);
@@ -391,7 +390,7 @@ int main(int argc, char *argv[]) {
             } else {
                 accommodateShortKey = false;
             }
-            cout << "\nEXECUTING AN AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n" << endl;
+            cout << "\nEXECUTING AN AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n\n";
             startTime = std::chrono::high_resolution_clock::now();
             nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
             timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, keyLength, keyLength,
@@ -406,7 +405,7 @@ int main(int argc, char *argv[]) {
                 if (rangeStart == 4) {
                     rangeStart = 5;
                 }
-                cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n" << endl;
+                cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n\n";
                 startTime = std::chrono::high_resolution_clock::now();
                 timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart, rangeEnd,
                                             alphabet,
@@ -418,13 +417,13 @@ int main(int argc, char *argv[]) {
                 } else if (tolower(input) == 'n') {
                     cout
                             << "\nThe properties of the message are such that it is beyond the capabilities of this program to decipher."
-                            << endl;
+                            << "\n";
                     printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
                 }
             }
         }
     } else {
-        cout << "Invalid response" << endl;
+        cout << "Invalid response" << "\n";
     }
     return EXIT_SUCCESS;
 }
