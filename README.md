@@ -41,8 +41,8 @@ Once WSL has been set up, the instructions provided for UNIX can be followed to 
 ## Example Runs
 The following are a few examples of what running the program is like: <br><br>
 **Verbose mode off**:<br><br>
-<img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example1.png" width=80%><br><br>
+<img src="https://github.com/zehadialam/Vigenere-Cipher-Breaker/blob/main/demo/verbose%20mode%20off.gif" width=80%><br><br>
 **Verbose mode on**:<br><br>
-<img src="https://github.com/zehadialam/vigenere-cipher-breaker/blob/main/screenshots/Example2.png" width=80%>
+<img src="https://github.com/zehadialam/Vigenere-Cipher-Breaker/blob/main/demo/verbose%20mode%20on.gif" width=80%>
 ## Reliability of Key Cracking
 Depending on the length of the ciphertext, length of the encryption key, and the textual properties of the encrypted message, the program will **not** always be successful. Since the program utilizes statistics to determine the probability that a particular key is the right one, certain criteria have to be met to ensure reliability (e.g. a small key-length to ciphertext length ratio). A significant weakness of the Vigenère cipher is the repeating occurrence of the key throughout the text. Higher repetitions have a higher chance of being cracked. The program should be effective and successful most of the time if the key is at most 25% the length of the ciphertext (without spaces, punctuation, and other non-alphabetic characters).
