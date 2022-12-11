@@ -12,7 +12,7 @@ public:
 private:
     std::unordered_map<std::string, double> nGramFrequencies;
     int nGramLength;
-    double sumValues{};
+    double sumTotalOccurrence{};
 };
 
 #endif // NGRAMSCORER_H
