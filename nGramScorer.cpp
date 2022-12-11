@@ -1,31 +1,26 @@
 #include <cmath>
+#include <sstream>
 #include <unordered_map>
 #include "nGramScorer.h"
 
 nGramScorer::nGramScorer(std::ifstream file) {
     std::string line{};
     if (file.is_open()) {
+        nGramFrequencies.reserve(389373); // Pre-allocate space for the n-gram frequencies map.
         while (getline(file, line)) {
-            std::string splitString;
+            std::stringstream lineStream(line);
             std::string key;
-            std::string value;
-            for (char c : line) {
-                if (c == ' ') {
-                    key = splitString;
-                    nGramLength = (int) key.length();
-                    splitString = "";
-                } else {
-                    splitString += c;
-                }
-            }
-            value = splitString;
-            sumValues += stoi(value);
-            nGramFrequencies[key] = stod(value);
+            int value;
+            lineStream >> key >> value;
+            nGramLength = (int) key.length();
+            sumValues += value;
+            nGramFrequencies[key] = value;
         }
         file.close();
     }
+    double logSum = log10(sumValues);
     for (auto &elementPair : nGramFrequencies) {
-        nGramFrequencies[elementPair.first] = log10(nGramFrequencies[elementPair.first]) - log10(sumValues);
+        nGramFrequencies[elementPair.first] = log10(elementPair.second) - logSum;
     }
 }
 
