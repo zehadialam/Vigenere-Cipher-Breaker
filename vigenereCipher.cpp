@@ -33,7 +33,7 @@ std::string vigenereCipher::formatKey(const std::string &ciphertext, const std::
  */
 std::string vigenereCipher::decrypt(std::string ciphertext, std::string key) {
     std::string decrypted{};
-	int ciphertextLength = ciphertext.length();
+    int ciphertextLength = ciphertext.length();
     for (int i = 0; i < ciphertextLength; i++) {
         // Get the current ciphertext and key characters
         char c = ciphertext[i];
