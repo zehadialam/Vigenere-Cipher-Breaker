@@ -111,7 +111,7 @@ string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const 
         }
         keyCandidates.push_back(std::make_pair(score, key.substr(0, n)));
     }
-    // Sort key candidates by score in ascending order
+	// Sort key candidates by score in ascending order
     std::sort(keyCandidates.begin(), keyCandidates.end(),
         [](const std::pair<double, string>& a, const std::pair<double, string>& b) {
             return a.first > b.first;
@@ -152,11 +152,11 @@ fullKeyNormal(nGramScorer ngram, int n, const string &alphabet, const string &ci
             }
             keyCandidates.push_back(std::make_pair(score, partialKey));
         }
-        std::sort(keyCandidates.begin(), keyCandidates.end(),
+		std::sort(keyCandidates.begin(), keyCandidates.end(),
         [](const std::pair<double, string>& a, const std::pair<double, string>& b) {
             return a.first > b.first;
         });
-        // cout << keyCandidates[0].second << std::endl;
+		// cout << keyCandidates[0].second << std::endl;
         keyBuilder = keyCandidates[0].second;
     }
     return keyCandidates[0].second;
@@ -276,7 +276,7 @@ breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, in
                 const string &originalCipherText, const string &formattedCipherText, bool verboseMode, bool aggressive,
                 bool accommodateShortKey, bool multithread) {
     std::vector<std::pair<double, string>> keyCandidates;
-    int increment = (multithread) ? 2 : 1;
+    int increment = (multithread) ? 3 : 1;
     for (int i = rangeStart; i <= rangeEnd; i += increment) {
         int tryKeyLength = i; // Need to fix keylength. Only works with length greater than 4.
         string keyBuilder = firstNKeyLetters(n1, n, alphabet, formattedCipherText, tryKeyLength);
@@ -326,8 +326,11 @@ double totalTimeTaken(std::chrono::time_point<std::chrono::high_resolution_clock
                             std::ref(formattedCipherText), verboseMode, aggressive, accommodateShortKey, multithread);
         std::thread thread2(breakEncryption, std::ref(n1), std::ref(n2), n, rangeStart + 1, rangeEnd, std::ref(alphabet), std::ref(originalCipherText),
                             std::ref(formattedCipherText), verboseMode, aggressive, accommodateShortKey, multithread);
+        std::thread thread3(breakEncryption, std::ref(n1), std::ref(n2), n, rangeStart + 2, rangeEnd, std::ref(alphabet), std::ref(originalCipherText),
+                            std::ref(formattedCipherText), verboseMode, aggressive, accommodateShortKey, multithread);
         thread1.join();
         thread2.join();
+        thread3.join();
     } else {
         breakEncryption(n1, n2, n, rangeStart, rangeEnd, alphabet, originalCipherText, formattedCipherText,
                         verboseMode, aggressive, accommodateShortKey, false);
@@ -374,23 +377,27 @@ int main(int argc, char *argv[]) {
     double timeTaken = totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, rangeStart, rangeEnd, alphabet,
                                       originalCipherText, formattedCipherText, verboseMode, false, false, multithread);
     char response{};
-    cout << "Was the message successfully decrypted? [Y/N] ";
-    std::cin >> response;
-    if (tolower(response) == 'y') {
-        printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
-    } else if (tolower(response) == 'n') {
-        int keyLength = vigenereCipher::getKeyLength();
-        bool accommodateShortKey = (keyLength < 12);
-        cout << "\nEXECUTING A STRONGER ATTEMPT TO BREAK THE ENCRYPTION...\n\n";
-        startTime = std::chrono::high_resolution_clock::now();
-        timeTaken += totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, keyLength, keyLength, alphabet,
-                                    originalCipherText, formattedCipherText, false, true, accommodateShortKey, false);
-        cout << "Was the message successfully decrypted? [Y/N] ";
-        std::cin >> response;
-        if (tolower(response) == 'y') {
-            printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
-        } else if (tolower(response) == 'n') {
-            accommodateShortKey = (keyLength < 15);
+    bool success = false;
+    bool exhaustedAttempts = false;
+    bool attempts[] = {false, false, false, false};
+    while (!success && !exhaustedAttempts) {
+        if (!attempts[0]) {
+            cout << "Was the message successfully decrypted? [Y/N] ";
+            std::cin >> response;
+            attempts[0] = true;
+        } else if (!attempts[1]) {
+            int keyLength = vigenereCipher::getKeyLength();
+            bool accommodateShortKey = (keyLength < 12);
+            cout << "\nEXECUTING A STRONGER ATTEMPT TO BREAK THE ENCRYPTION...\n\n";
+            startTime = std::chrono::high_resolution_clock::now();
+            timeTaken += totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, keyLength, keyLength, alphabet,
+                                        originalCipherText, formattedCipherText, false, true, accommodateShortKey, false);
+            cout << "Was the message successfully decrypted? [Y/N] ";
+            std::cin >> response;
+            attempts[1] = true;
+        } else if (!attempts[2]) {
+            int keyLength = vigenereCipher::getKeyLength(); // will be incorrect if multithread was on.
+            bool accommodateShortKey = (keyLength < 15);
             cout << "\nEXECUTING AN AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n\n";
             startTime = std::chrono::high_resolution_clock::now();
             nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
@@ -400,29 +407,34 @@ int main(int argc, char *argv[]) {
                                         false);
             cout << "Was the message successfully decrypted? [Y/N] ";
             std::cin >> response;
-            if (tolower(response) == 'y') {
-                printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
-            } else if (tolower(response) == 'n') {
-                rangeStart = (rangeStart == 4) ? 5 : rangeStart;
-                cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n\n";
-                startTime = std::chrono::high_resolution_clock::now();
-                timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart, rangeEnd,
-                                            alphabet,
-                                            originalCipherText, formattedCipherText, false, true, true, multithread);
-                cout << "Was the message successfully decrypted? [Y/N] ";
-                std::cin >> response;
-                if (tolower(response) == 'y') {
-                    printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
-                } else if (tolower(response) == 'n') {
-                    cout
-                            << "\nThe properties of the message are such that it is beyond the capabilities of this program to decipher."
-                            << "\n";
-                    printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
-                }
-            }
+            attempts[2] = true;
+        } else if (!attempts[3]) {
+            nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
+            rangeStart = (rangeStart == 4) ? 5 : rangeStart;
+            cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n\n";
+            startTime = std::chrono::high_resolution_clock::now();
+            timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart, rangeEnd,
+                                        alphabet,
+                                        originalCipherText, formattedCipherText, false, true, true, multithread);
+            cout << "Was the message successfully decrypted? [Y/N] ";
+            std::cin >> response;
+            attempts[4] = true;
+        } else if (!attempts[4]) {
+            cout
+                << "\nThe properties of the message are such that it is beyond the capabilities of this program to decipher."
+                << "\n";
+            printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
+            attempts[4] = true;
+            exhaustedAttempts = true;
         }
-    } else {
-        cout << "Invalid response" << "\n";
+        if (tolower(response) == 'y') {
+            success = true;
+            printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
+        }
+        if (tolower(response) != 'y' && tolower(response != 'n')) {
+            cout << "Invalid response" << "\n";
+            return EXIT_FAILURE;
+        }
     }
     return EXIT_SUCCESS;
 }
