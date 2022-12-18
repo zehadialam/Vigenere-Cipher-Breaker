@@ -111,7 +111,7 @@ string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const 
         }
         keyCandidates.push_back(std::make_pair(score, key.substr(0, n)));
     }
-	// Sort key candidates by score in ascending order
+    // Sort key candidates by score in ascending order
     std::sort(keyCandidates.begin(), keyCandidates.end(),
         [](const std::pair<double, string>& a, const std::pair<double, string>& b) {
             return a.first > b.first;
@@ -152,11 +152,11 @@ fullKeyNormal(nGramScorer ngram, int n, const string &alphabet, const string &ci
             }
             keyCandidates.push_back(std::make_pair(score, partialKey));
         }
-		std::sort(keyCandidates.begin(), keyCandidates.end(),
+        std::sort(keyCandidates.begin(), keyCandidates.end(),
         [](const std::pair<double, string>& a, const std::pair<double, string>& b) {
             return a.first > b.first;
         });
-		// cout << keyCandidates[0].second << std::endl;
+        // cout << keyCandidates[0].second << std::endl;
         keyBuilder = keyCandidates[0].second;
     }
     return keyCandidates[0].second;
