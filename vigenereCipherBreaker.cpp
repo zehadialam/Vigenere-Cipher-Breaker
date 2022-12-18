@@ -13,17 +13,19 @@ using std::string;
 using std::cout;
 
 /**
- * Return the English alphabet as a string
+ * Return the English alphabet as a const char*
  * @return the English alphabet
  */
-string theAlphabet() {
+const char* theAlphabet() {
     return "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 }
 
 /**
- * Return all-caps ciphertext with spaces and punctuation removed.
- * @param ciphertext the specified ciphertext
- * @return all-caps ciphertext with spaces and punctuation removed.
+ * Formats the given ciphertext by removing non-alphabetic characters and converting 
+ * it to uppercase.
+ * 
+ * @param ciphertext The original ciphertext to be formatted.
+ * @return The formatted ciphertext.
  */
 string formatCiphertext(const string &ciphertext) {
     string formattedCiphertext{ciphertext};
@@ -67,11 +69,16 @@ string restoreOriginalFormat(const string &originalFormat, string modifiedFormat
 }
 
 /**
- * Return a permutation of an ngram
- * @param n the number of characters making up the ngram
- * @param permutationCount the number designating a particular permutation
- * @param alphabet the english alphabet
- * @return a permutation of an ngram
+ * 
+ * This function generates an n-gram permutation by taking a permutation count and an 
+ * alphabet and constructing a string by repeatedly taking the remainder of the permutation 
+ * count divided by the length of the alphabet and using the corresponding character from 
+ * the alphabet.
+ * 
+ * @param n The length of the n-gram to generate.
+ * @param permutationCount The permutation count to use.
+ * @param alphabet The alphabet to use.
+ * @return The generated n-gram permutation.
  */
 string ngramPermutation(int n, int permutationCount, string alphabet) {
     string ngram{};
@@ -91,12 +98,9 @@ string ngramPermutation(int n, int permutationCount, string alphabet) {
  * @param keyLength the number of characters of the key
  * @return the first n letters of the potential decryption key
  */
- /**
- Yes, you can use the C++ algorithms library to make this code more efficient. One way to do this is to use the std::sort function to sort the keyCandidates map by score, instead of inserting each new candidate into the map and then returning the key with the highest score. This would avoid the need to iterate over the entire map to find the key with the highest score, which would make the code run faster.
-Another way to make the code more efficient is to use the std::vector class instead of the std::map class to store the key candidates. This would allow you to avoid the overhead of maintaining a map, and would make it easier to sort the key candidates by score.
-*/
 string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength) {
     std::vector<std::pair<double, string>> keyCandidates;
+    keyCandidates.reserve(17576); // preallocate elements
     string pad(keyLength - n, 'A');
     int totalngramPermutations = pow(26, n);
     for (int i = 0; i < totalngramPermutations; i++) {
@@ -132,33 +136,53 @@ string firstNKeyLetters(nGramScorer ngram, int n, const string &alphabet, const 
 string
 fullKeyNormal(nGramScorer ngram, int n, const string &alphabet, const string &ciphertext, int keyLength,
               string keyBuilder) {
+    // Create a vector to store key candidates
     std::vector<std::pair<double, string>> keyCandidates;
+    // Reserve space for 26 key candidates
+    keyCandidates.reserve(26);
+    // Iterate through all possible characters for the next position in the key
     for (int i = 0; i < keyLength - n; i++) {
+        // Clear the key candidates vector because alphabet iteration is restarted
+        // for the next character in the next position in the key
         keyCandidates.clear();
         for (char c : alphabet) {
+            // Create a partial key by appending the current character to the key builder
             string partialKey = keyBuilder + c;
+            // Create a pad string filled with null characters
             string pad(keyLength - partialKey.length(), '\0');
+            // Fill the pad string with 'A' characters
             std::memset(&pad[0], 'A', pad.length());
+            // Create a full key by concatenating the partial key and the pad
             string fullKey(partialKey.length() + pad.length(), '\0');
             std::memcpy(&fullKey[0], partialKey.data(), partialKey.length());
             std::memcpy(&fullKey[partialKey.length()], pad.data(), pad.length());
+            // Format the full key for use in decryption
             string fullKeyFormatted = vigenereCipher::formatKey(ciphertext, fullKey);
+            // Decrypt the ciphertext using the formatted full key
             string plaintext = vigenereCipher::decrypt(ciphertext, fullKeyFormatted);
             double score = 0;
+            // Iterate through the plaintext in blocks of keyLength and compute the score 
+            // for each block
             for (int j = 0; j < (int) ciphertext.length(); j += keyLength) {
+                // Check that the current block fits within the plaintext
                 if (j + partialKey.length() < plaintext.length()) {
+                    // Compute the score for the current block and add it to the total score
                     score += ngram.score(plaintext.substr(j, partialKey.length()));
                 }
             }
+            // Add the score and partial key to the key candidates vector
             keyCandidates.push_back(std::make_pair(score, partialKey));
         }
+        // Sort the key candidates by score in descending order
         std::sort(keyCandidates.begin(), keyCandidates.end(),
         [](const std::pair<double, string>& a, const std::pair<double, string>& b) {
             return a.first > b.first;
         });
         // cout << keyCandidates[0].second << std::endl;
+        // Set the key builder to the best candidate from the current iteration
         keyBuilder = keyCandidates[0].second;
     }
+    // Return the highest scoring key candidate
     return keyCandidates[0].second;
 }
 
@@ -219,11 +243,10 @@ fullKeyStronger(nGramScorer ngram, int n, const string &alphabet, const string &
 
 /**
  * Prints the verbose results of an attempt to break the decryption key
- * @param bestScore the best ngram score of a string
+ * @param bestScore the best score achieved in the decryption process.
  * @param tryKeyLength the length of a potential decryption key
- * @param tryKey a potential decryption key
- * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic
- * characters
+ * @param tryKey the key used in the decryption process.
+ * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic characters
  * @param formattedCipherText all-caps ciphertext with spaces and punctuation removed
  */
 void printVerboseResults(double bestScore, int tryKeyLength, const string &tryKey, const string &originalCipherText,
@@ -240,10 +263,9 @@ void printVerboseResults(double bestScore, int tryKeyLength, const string &tryKe
 
 /**
  * Prints the non-verbose results of an attempt to break the decryption key
- * @param keyLength the length of the potential decryption key
- * @param key a potential decryption key
- * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic
- * characters
+ * @param keyLength the length of a potential decryption key
+ * @param key the key used in the decryption process.
+ * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic characters
  * @param formattedCipherText all-caps ciphertext with spaces and punctuation removed
  */
 void
@@ -299,20 +321,25 @@ breakEncryption(const nGramScorer &n1, nGramScorer n2, int n, int rangeStart, in
 }
 
 /**
- * Return the total elapsed time to run the breakEncryption() function
- * @param startTime the start value for the timer
- * @param breakEncryption the breakEncryption() function
- * @param n1 an nGramScorer object
- * @param n2 an nGramScorer object
- * @param n the number of characters making up the ngram
- * @param rangeStart the minimum key length to try
- * @param rangeEnd the maximum key length to try
- * @param alphabet the English alphabet
- * @param originalCipherText the ciphertext with spaces, punctuation, and non-alphabetic
- * characters
- * @param formattedCipherText all-caps ciphertext with spaces and punctuation removed
- * @param verboseMode specify whether or not to use verbose mode
- * @return the total elapsed time to run the breakEncryption() function
+ * This function calculates the total time taken to execute a given function by measuring the elapsed 
+ * time between the start and end of the function execution. The function can be executed in single-threaded 
+ * or multi-threaded mode.
+ * 
+ * @param startTime The start time to use for measuring the elapsed time.
+ * @param breakEncryption The function to execute.
+ * @param n1 An n-gram scorer.
+ * @param n2 An n-gram scorer.
+ * @param n The length of the n-grams to use.
+ * @param rangeStart The start of the range of key lengths to try.
+ * @param rangeEnd The end of the range of key lengths to try.
+ * @param alphabet The alphabet to use.
+ * @param originalCipherText The original ciphertext.
+ * @param formattedCipherText The formatted ciphertext.
+ * @param verboseMode Whether verbose mode is enabled.
+ * @param aggressive Whether to use aggressive mode.
+ * @param accommodateShortKey Whether to accommodate short keys.
+ * @param multithread Whether to execute the function in multi-threaded mode.
+ * @return The total time taken to execute the function.
  */
 double totalTimeTaken(std::chrono::time_point<std::chrono::high_resolution_clock> startTime,
                const std::function<void(const nGramScorer&, const nGramScorer&, int, int, int, const string&, const string&, const string&,
@@ -340,8 +367,23 @@ double totalTimeTaken(std::chrono::time_point<std::chrono::high_resolution_clock
     return elapsedTime.count();
 }
 
-
-void processCommandLineArgs(int argc, char *argv[], string& originalCipherText, string& formattedCipherText, string& alphabet, int& rangeStart, int& rangeEnd, bool& verboseMode) {
+/**
+ * 
+ * This function processes the command line arguments passed to the program and stores the values in the 
+ * provided variables. If the correct number of arguments is not provided, it prints an error message and 
+ * exits the program with a failure code.
+ * 
+ * @param argc The number of command line arguments.
+ * @param argv An array of strings containing the command line arguments.
+ * @param originalCipherText A string to store the original ciphertext.
+ * @param formattedCipherText A string to store the formatted ciphertext.
+ * @param alphabet A string to store the alphabet.
+ * @param rangeStart An integer to store the start of the range of key lengths to try.
+ * @param rangeEnd An integer to store the end of the range of key lengths to try.
+ * @param verboseMode A boolean to store whether verbose mode is enabled.
+ */
+void processCommandLineArgs(int argc, char *argv[], string& originalCipherText, string& formattedCipherText, 
+                            string& alphabet, int& rangeStart, int& rangeEnd, bool& verboseMode) {
     // Check if the correct number of command line arguments were provided
     if (argc != 5) {
         std::cerr << "Error: invalid number of command line arguments. Please use the following syntax:\n"
@@ -359,6 +401,37 @@ void processCommandLineArgs(int argc, char *argv[], string& originalCipherText, 
     verboseMode = strcmp(argv[4], "0") != 0;
 }
 
+/** 
+ * This function repeatedly prompts the user for a response until a valid response is entered. 
+ * A valid response is a single character, either 'Y' or 'N', in uppercase or lowercase.
+ * 
+ * @return The user's response as a string.
+ */
+string getResponse() {
+    string response{};
+    bool validResponse = false;
+    while (!validResponse) {
+        std::cout << "Was the message successfully decrypted? [Y/N] ";
+        std::getline(std::cin, response);
+        if (response.length() != 1) {
+            std::cout << "Invalid response.\n";
+        } else {
+            switch (tolower((char)response[0])) {
+                case 'y':
+                    validResponse = true;
+                    break;
+                case 'n':
+                    validResponse = true;
+                    break;
+                default:
+                    std::cout << "Invalid response.\n";
+                    break;
+            }
+        }
+    }
+    return response;
+}
+
 int main(int argc, char *argv[]) {
     // Create n-gram scorers
     nGramScorer trigram(std::ifstream(R"(ngrams/trigrams.txt)"));
@@ -370,54 +443,54 @@ int main(int argc, char *argv[]) {
     bool verboseMode;
     processCommandLineArgs(argc, argv, originalCipherText, formattedCipherText, alphabet, rangeStart, rangeEnd, verboseMode);
     
+    // Determine if parallelization could be used
     int numCores = std::thread::hardware_concurrency();
     bool multithread = (rangeEnd - rangeStart >= 10) && (verboseMode) && (numCores > 1);
-    cout << "\nATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n\n";
-    auto startTime = std::chrono::high_resolution_clock::now();
-    double timeTaken = totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, rangeStart, rangeEnd, alphabet,
-                                      originalCipherText, formattedCipherText, verboseMode, false, false, multithread);
-    char response{};
+    
+    double timeTaken = 0;
+    string response{};
     bool success = false;
-    bool exhaustedAttempts = false;
     bool attempts[] = {false, false, false, false};
+    bool exhaustedAttempts = false;
+    
     while (!success && !exhaustedAttempts) {
         if (!attempts[0]) {
-            cout << "Was the message successfully decrypted? [Y/N] ";
-            std::cin >> response;
+            cout << "\nATTEMPTING TO BREAK THE ENCRYPTION AND UNLOCK THE MESSAGE...\n\n";
+            auto startTime = std::chrono::high_resolution_clock::now();
+            timeTaken += totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, rangeStart, rangeEnd, alphabet,
+                                              originalCipherText, formattedCipherText, verboseMode, false, false, multithread);
+            response = getResponse();
             attempts[0] = true;
         } else if (!attempts[1]) {
-            int keyLength = vigenereCipher::getKeyLength();
+            int keyLength = vigenereCipher::getKeyLength(); // will be incorrect if multithread was on.
             bool accommodateShortKey = (keyLength < 12);
             cout << "\nEXECUTING A STRONGER ATTEMPT TO BREAK THE ENCRYPTION...\n\n";
-            startTime = std::chrono::high_resolution_clock::now();
+            auto startTime = std::chrono::high_resolution_clock::now();
             timeTaken += totalTimeTaken(startTime, breakEncryption, trigram, quadgram, 3, keyLength, keyLength, alphabet,
                                         originalCipherText, formattedCipherText, false, true, accommodateShortKey, false);
-            cout << "Was the message successfully decrypted? [Y/N] ";
-            std::cin >> response;
+            response = getResponse();
             attempts[1] = true;
         } else if (!attempts[2]) {
-            int keyLength = vigenereCipher::getKeyLength(); // will be incorrect if multithread was on.
+            int keyLength = vigenereCipher::getKeyLength();
             bool accommodateShortKey = (keyLength < 15);
             cout << "\nEXECUTING AN AGGRESSIVE ATTEMPT TO BREAK THE ENCRYPTION...\n\n";
-            startTime = std::chrono::high_resolution_clock::now();
+            auto startTime = std::chrono::high_resolution_clock::now();
             nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
             timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, keyLength, keyLength,
                                         alphabet,
                                         originalCipherText, formattedCipherText, false, true, accommodateShortKey,
                                         false);
-            cout << "Was the message successfully decrypted? [Y/N] ";
-            std::cin >> response;
+            response = getResponse();
             attempts[2] = true;
         } else if (!attempts[3]) {
             nGramScorer quintgram(std::ifstream(R"(ngrams/quintgrams.txt)"));
             rangeStart = (rangeStart == 4) ? 5 : rangeStart;
             cout << "\nTRYING ALL KEYS WITHIN SPECIFIED RANGE IN A MORE AGGRESSIVE ATTEMPT...\n\n";
-            startTime = std::chrono::high_resolution_clock::now();
+            auto startTime = std::chrono::high_resolution_clock::now();
             timeTaken += totalTimeTaken(startTime, breakEncryption, quadgram, quintgram, 4, rangeStart, rangeEnd,
                                         alphabet,
                                         originalCipherText, formattedCipherText, false, true, true, multithread);
-            cout << "Was the message successfully decrypted? [Y/N] ";
-            std::cin >> response;
+            response = getResponse();
             attempts[4] = true;
         } else if (!attempts[4]) {
             cout
@@ -427,13 +500,9 @@ int main(int argc, char *argv[]) {
             attempts[4] = true;
             exhaustedAttempts = true;
         }
-        if (tolower(response) == 'y') {
+        if (response == "y") {
             success = true;
             printf("\nTotal elapsed time for operation: %.2f seconds\n\n", timeTaken);
-        }
-        if (tolower(response) != 'y' && tolower(response != 'n')) {
-            cout << "Invalid response" << "\n";
-            return EXIT_FAILURE;
         }
     }
     return EXIT_SUCCESS;
